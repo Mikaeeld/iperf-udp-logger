@@ -149,10 +149,10 @@ iperf_udp_recv(struct iperf_stream *sp)
             {
                 fprintf(stderr, "%ld,0\n", pcount - missed);
             }
-        fprintf(stderr, "%ld,1,%d,%d\n", pcount, sec, usec);
+        fprintf(stderr, "%ld,1,%d.%d\n", pcount, sec, usec);
 	    }
         else {
-            fprintf(stderr, "%ld,1,%d,%d\n", pcount, sec, usec);
+            fprintf(stderr, "%ld,1,%d.%d\n", pcount, sec, usec);
         }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -618,6 +618,6 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
-    fprintf(stderr, "packet,received,sec,usec\n");
+    fprintf(stderr, "packet,received,time\n");
     return 0;
 }
