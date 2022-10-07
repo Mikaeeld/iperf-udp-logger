@@ -145,7 +145,15 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
 		sp->cnt_error += (pcount - 1) - sp->packet_count;
+        for (int missed = pcount - sp->packet_count - 1; missed > 0; missed--)
+            {
+                fprintf(stderr, "%ld,0\n", pcount - missed);
+            }
+        fprintf(stderr, "%ld,1,%d,%d\n", pcount, sec, usec);
 	    }
+        else {
+            fprintf(stderr, "%ld,1,%d,%d\n", pcount, sec, usec);
+        }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
 	} else {
@@ -610,5 +618,6 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
+    fprintf(stderr, "packet,received,sec,usec\n");
     return 0;
 }
