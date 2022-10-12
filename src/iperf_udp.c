@@ -141,6 +141,8 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 */
 	if (pcount >= sp->packet_count + 1) {
 
+        iperf_time_now(&arrival_time);
+
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
@@ -149,10 +151,10 @@ iperf_udp_recv(struct iperf_stream *sp)
             {
                 fprintf(stderr, "%ld,0\n", pcount - missed);
             }
-        fprintf(stderr, "%ld,1,%d.%d\n", pcount, sec, usec);
+        fprintf(stderr, "%ld,1,%d.%d,%d.%d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
 	    }
         else {
-            fprintf(stderr, "%ld,1,%d.%d\n", pcount, sec, usec);
+            fprintf(stderr, "%ld,1,%d.%d,%d.%d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
         }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -236,6 +238,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
+    
+    fprintf(stderr, "%ld,%d.%d\n", pcount, sec, usec);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -249,6 +253,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
+
+    fprintf(stderr, "%d,%d.%d\n", sp->packet_count, before.secs, before.usecs);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -618,6 +624,10 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
-    fprintf(stderr, "packet,received,time\n");
+    if (test->role == 's') {
+        fprintf(stderr, "packet,received,timestamp,time\n");
+    } else {
+        fprintf(stderr, "packet,time\n");
+    }
     return 0;
 }
