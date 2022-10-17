@@ -151,10 +151,10 @@ iperf_udp_recv(struct iperf_stream *sp)
             {
                 fprintf(stderr, "%ld,0\n", pcount - missed);
             }
-        fprintf(stderr, "%ld,1,%d.%d,%d.%d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+        fprintf(stderr, "%ld,1,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
 	    }
         else {
-            fprintf(stderr, "%ld,1,%d.%d,%d.%d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+            fprintf(stderr, "%ld,1,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
         }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -239,7 +239,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
     
-    fprintf(stderr, "%ld,%d.%d\n", pcount, sec, usec);
+    fprintf(stderr, "%ld,%d.%06d\n", pcount, sec, usec);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -254,7 +254,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
 
-    fprintf(stderr, "%d,%d.%d\n", sp->packet_count, before.secs, before.usecs);
+    fprintf(stderr, "%d,%d.%06d\n", sp->packet_count, before.secs, before.usecs);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
