@@ -147,14 +147,14 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
 		sp->cnt_error += (pcount - 1) - sp->packet_count;
-        for (int missed = pcount - sp->packet_count - 1; missed > 0; missed--)
-            {
-                fprintf(stderr, "%ld,0\n", pcount - missed);
-            }
-        fprintf(stderr, "%ld,1,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+        // for (int missed = pcount - sp->packet_count - 1; missed > 0; missed--)
+        //     {
+        //         fprintf(stderr, "%ld,0\n", pcount - missed);
+        //     }
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
 	    }
         else {
-            fprintf(stderr, "%ld,1,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+            fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
         }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -165,6 +165,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	     * This counts as an out-of-order packet.
 	     */
 	    sp->outoforder_packets++;
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
 
 	    /*
 	     * If we have lost packets, then the fact that we are now
@@ -625,7 +626,7 @@ int
 iperf_udp_init(struct iperf_test *test)
 {
     if (test->role == 's') {
-        fprintf(stderr, "packet,received,timestamp,time\n");
+        fprintf(stderr, "packet,timestamp,time\n");
     } else {
         fprintf(stderr, "packet,time\n");
     }
