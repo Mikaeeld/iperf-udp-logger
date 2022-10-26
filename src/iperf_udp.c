@@ -74,7 +74,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     int       first_packet = 0;
     double    transit = 0, d = 0;
-    struct iperf_time sent_time, arrival_time, temp_time;
+    struct iperf_time sent_time, arrival_time, temp_time, arrival_time_utc;
 
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
@@ -142,6 +142,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	if (pcount >= sp->packet_count + 1) {
 
         iperf_time_now(&arrival_time);
+        iperf_time_now_utc(&arrival_time_utc);
 
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
@@ -151,10 +152,10 @@ iperf_udp_recv(struct iperf_stream *sp)
         //     {
         //         fprintf(stderr, "%ld,0\n", pcount - missed);
         //     }
-        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 	    }
         else {
-            fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+            fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
         }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
@@ -165,7 +166,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	     * This counts as an out-of-order packet.
 	     */
 	    sp->outoforder_packets++;
-        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time.secs, arrival_time.usecs);
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 
 	    /*
 	     * If we have lost packets, then the fact that we are now
@@ -227,7 +228,7 @@ iperf_udp_send(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     struct iperf_time before;
 
-    iperf_time_now(&before);
+    iperf_time_now_utc(&before);
 
     ++sp->packet_count;
 
