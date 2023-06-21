@@ -74,7 +74,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     int       first_packet = 0;
     double    transit = 0, d = 0;
-    struct iperf_time sent_time, arrival_time, temp_time;
+    struct iperf_time sent_time, arrival_time, temp_time, arrival_time_utc;
 
     r = Nread(sp->socket, sp->buffer, size, Pudp);
 
@@ -141,11 +141,22 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 */
 	if (pcount >= sp->packet_count + 1) {
 
+        iperf_time_now(&arrival_time);
+        iperf_time_now_utc(&arrival_time_utc);
+
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
 		sp->cnt_error += (pcount - 1) - sp->packet_count;
+        // for (int missed = pcount - sp->packet_count - 1; missed > 0; missed--)
+        //     {
+        //         fprintf(stderr, "%ld,0\n", pcount - missed);
+        //     }
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 	    }
+        else {
+            fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
+        }
 	    /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
 	} else {
@@ -155,6 +166,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	     * This counts as an out-of-order packet.
 	     */
 	    sp->outoforder_packets++;
+        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 
 	    /*
 	     * If we have lost packets, then the fact that we are now
@@ -216,7 +228,7 @@ iperf_udp_send(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     struct iperf_time before;
 
-    iperf_time_now(&before);
+    iperf_time_now_utc(&before);
 
     ++sp->packet_count;
 
@@ -228,6 +240,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
+    
+    fprintf(stderr, "%ld,%d.%06d\n", pcount, sec, usec);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -241,6 +255,8 @@ iperf_udp_send(struct iperf_stream *sp)
 	sec = htonl(before.secs);
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
+
+    fprintf(stderr, "%d,%d.%06d\n", sp->packet_count, before.secs, before.usecs);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -610,5 +626,10 @@ iperf_udp_connect(struct iperf_test *test)
 int
 iperf_udp_init(struct iperf_test *test)
 {
+    if (test->role == 's') {
+        fprintf(stderr, "packet,timestamp,time\n");
+    } else {
+        fprintf(stderr, "packet,time\n");
+    }
     return 0;
 }
