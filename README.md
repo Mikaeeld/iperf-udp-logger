@@ -1,3 +1,8 @@
+# UDP logger
+
+Clone, build and install iperf as instructed in the original readme below
+Logging is done to stderr, simply run iperf in udp mode as normal and use 2>[filename] to pipe the output
+
 iperf3:  A TCP, UDP, and SCTP network bandwidth measurement tool
 ================================================================
 
