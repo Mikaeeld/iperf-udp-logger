@@ -126,6 +126,22 @@ iperf_tcp_accept(struct iperf_test * test)
         i_errno = IESTREAMCONNECT;
         return -1;
     }
+#if defined(HAVE_SO_MAX_PACING_RATE)
+    /* If fq socket pacing is specified, enable it. */
+
+    if (test->settings->fqrate) {
+	/* Convert bits per second to bytes per second */
+	unsigned int fqrate = test->settings->fqrate / 8;
+	if (fqrate > 0) {
+	    if (test->debug) {
+		printf("Setting fair-queue socket pacing to %u\n", fqrate);
+	    }
+	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
+		warning("Unable to set socket pacing");
+	    }
+	}
+    }
+#endif /* HAVE_SO_MAX_PACING_RATE */
 
     if (Nread(s, cookie, COOKIE_SIZE, Ptcp) < 0) {
         i_errno = IERECVCOOKIE;
@@ -240,21 +256,6 @@ iperf_tcp_listen(struct iperf_test *test)
                 return -1;
             }
         }
-#if defined(HAVE_SO_MAX_PACING_RATE)
-    /* If fq socket pacing is specified, enable it. */
-    if (test->settings->fqrate) {
-	/* Convert bits per second to bytes per second */
-	unsigned int fqrate = test->settings->fqrate / 8;
-	if (fqrate > 0) {
-	    if (test->debug) {
-		printf("Setting fair-queue socket pacing to %u\n", fqrate);
-	    }
-	    if (setsockopt(s, SOL_SOCKET, SO_MAX_PACING_RATE, &fqrate, sizeof(fqrate)) < 0) {
-		warning("Unable to set socket pacing");
-	    }
-	}
-    }
-#endif /* HAVE_SO_MAX_PACING_RATE */
     {
 	unsigned int rate = test->settings->rate / 8;
 	if (rate > 0) {
@@ -471,9 +472,20 @@ iperf_tcp_connect(struct iperf_test *test)
     }
 
     if (test->json_output) {
-	cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+    cJSON *sock_bufsize_item = cJSON_GetObjectItem(test->json_start, "sock_bufsize");
+    if (sock_bufsize_item == NULL) {
+    cJSON_AddNumberToObject(test->json_start, "sock_bufsize", test->settings->socket_bufsize);
+    }
+
+    cJSON *sndbuf_actual_item = cJSON_GetObjectItem(test->json_start, "sndbuf_actual");
+    if (sndbuf_actual_item == NULL) {
 	cJSON_AddNumberToObject(test->json_start, "sndbuf_actual", sndbuf_actual);
+    }
+        
+    cJSON *rcvbuf_actual_item = cJSON_GetObjectItem(test->json_start, "rcvbuf_actual");
+    if (rcvbuf_actual_item == NULL) {
 	cJSON_AddNumberToObject(test->json_start, "rcvbuf_actual", rcvbuf_actual);
+    }
     }
 
 #if defined(HAVE_FLOWLABEL)
@@ -544,6 +556,9 @@ iperf_tcp_connect(struct iperf_test *test)
 	    }
 	}
     }
+
+    /* Set common socket options */
+    iperf_common_sockopts(test, s);
 
     if (connect(s, (struct sockaddr *) server_res->ai_addr, server_res->ai_addrlen) < 0 && errno != EINPROGRESS) {
 	saved_errno = errno;
