@@ -105,7 +105,7 @@ void fill_with_repeating_pattern(void *out, size_t outsize)
  * Generate and return a cookie string
  *
  * Iperf uses this function to create test "cookies" which
- * server as unique test identifiers. These cookies are also
+ * serve as unique test identifiers. These cookies are also
  * used for the authentication of stream connections.
  * Assumes cookie has size (COOKIE_SIZE + 1) char's.
  */
@@ -595,3 +595,30 @@ getline(char **buf, size_t *bufsiz, FILE *fp)
 }
 
 #endif
+
+/* Translate numeric State to text - for debugging pupposes */
+char *
+state_to_text(signed char state)
+{
+    char *txt;
+
+    switch (state) {
+        case 0: txt = "Test reset"; break;
+        case TEST_START: txt = "TEST_START - starting a new test"; break;
+        case TEST_RUNNING: txt = "TEST_RUNNING"; break;
+        case TEST_END: txt = "TEST_END"; break;
+        case PARAM_EXCHANGE: txt = "PARAM_EXCHANGE - Client to Server Parameters Exchange"; break;
+        case CREATE_STREAMS: txt = "CREATE_STREAMS"; break;
+        case SERVER_TERMINATE: txt = "SERVER_TERMINATE"; break;
+        case CLIENT_TERMINATE: txt = "CLIENT_TERMINATE"; break;
+        case EXCHANGE_RESULTS: txt = "EXCHANGE_RESULTS"; break;
+        case DISPLAY_RESULTS: txt = "DISPLAY_RESULTS"; break;
+        case IPERF_START: txt = "IPERF_START - waiting for a new test"; break;
+        case IPERF_DONE: txt = "IPERF_DONE"; break;
+        case ACCESS_DENIED: txt = "ACCESS_DENIED - Server is busy"; break;
+        case SERVER_ERROR: txt = "SERVER_ERROR"; break;
+        default: txt = "Unknown State";
+    }
+
+    return txt;
+}

@@ -61,9 +61,7 @@
 #include <openssl/evp.h>
 #endif // HAVE_SSL
 
-#ifdef HAVE_PTHREAD
-#include <pthread.h>
-#endif // HAVE_PTHREAD
+#include "iperf_pthread.h"
 
 /*
  * Atomic types highly desired, but if not, we approximate what we need
@@ -84,6 +82,14 @@ typedef atomic_uint_fast64_t atomic_iperf_size_t;
 #if (defined(__vxworks)) || (defined(__VXWORKS__))
 typedef unsigned int uint
 #endif // __vxworks or __VXWORKS__
+
+struct iperf_sctp_info
+{
+    long rtt;
+    long pmtu;
+    uint32_t wnd;
+    uint32_t cwnd;
+};
 
 struct iperf_interval_results
 {
@@ -109,6 +115,9 @@ struct iperf_interval_results
     /* Just placeholders, never accessed. */
     char *tcpInfo;
 #endif
+#if defined(HAVE_SCTP_H)
+    struct iperf_sctp_info sctp_info;
+#endif /* HAVE_SCTP_H */
     long interval_retrans;
     long snd_cwnd;
     long snd_wnd;
@@ -321,6 +330,7 @@ struct iperf_test
     char      *server_authorized_users;
     EVP_PKEY  *server_rsa_private_key;
     int       server_skew_threshold;
+    int       use_pkcs1_padding;
 #endif // HAVE_SSL
 
     /* boolean variables for Options */
@@ -425,6 +435,8 @@ struct iperf_test
 #define MAX_RESULT_STRING 4096
 
 #define UDP_BUFFER_EXTRA 1024
+
+#define MAX_PARAMS_JSON_STRING 8 * 1024
 
 /* constants for command line arg sanity checks */
 #define MB (1024 * 1024)
