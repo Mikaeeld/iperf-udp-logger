@@ -125,11 +125,11 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * far (so we're expecting to see the packet with sequence number
 	 * sp->packet_count + 1 arrive next).
 	 */
+
+    iperf_time_now(&arrival_time);
+    iperf_time_now_utc(&arrival_time_utc);
+
 	if (pcount >= sp->packet_count + 1) {
-
-        iperf_time_now(&arrival_time);
-        iperf_time_now_utc(&arrival_time_utc);
-
 	    /* Forward, but is there a gap in sequence numbers? */
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
@@ -179,9 +179,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * computation does not require knowing the round-trip
 	 * time.
 	 */
-	iperf_time_now(&arrival_time);
-
-	iperf_time_diff(&arrival_time, &sent_time, &temp_time);
+	iperf_time_diff(&arrival_time_utc, &sent_time, &temp_time);
 	transit = iperf_time_in_secs(&temp_time);
 
 	/* Hack to handle the first packet by initializing prev_transit. */
