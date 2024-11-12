@@ -633,9 +633,9 @@ int
 iperf_udp_init(struct iperf_test *test)
 {
     if (test->role == 's') {
-        fprintf(stderr, "packet,timestamp,time\n");
+        fprintf(stderr, "packet,timestamp,timeReceived\n");
     } else {
-        fprintf(stderr, "packet,time\n");
+        fprintf(stderr, "packet,timestamp\n");
     }
     return 0;
 }
