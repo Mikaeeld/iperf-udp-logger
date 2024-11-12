@@ -60,7 +60,7 @@ iperf_udp_recv(struct iperf_stream *sp)
     int       size = sp->settings->blksize;
     int       first_packet = 0;
     double    transit = 0, d = 0;
-    struct iperf_time sent_time, arrival_time, temp_time, arrival_time_utc;
+    struct iperf_time sent_time, arrival_time, temp_time, arrival_time_utc, prev_arrival_time_utc;
 
     r = Nread_no_select(sp->socket, sp->buffer, size, Pudp);
 
@@ -126,7 +126,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	 * sp->packet_count + 1 arrive next).
 	 */
 
-    iperf_time_now(&arrival_time);
+    // iperf_time_now(&arrival_time);
     iperf_time_now_utc(&arrival_time_utc);
 
 	if (pcount >= sp->packet_count + 1) {
@@ -134,16 +134,15 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    if (pcount > sp->packet_count + 1) {
 		/* There's a gap so count that as a loss. */
 		sp->cnt_error += (pcount - 1) - sp->packet_count;
+        fprintf(stderr, "%lld,%lld,%lld,%d.%06d,%d.%06d\n", (pcount -1) - sp->packet_count, sp->packet_count + 1, pcount - 1, prev_arrival_time_utc.secs, prev_arrival_time_utc.usecs, arrival_time_utc.secs, arrival_time_utc.usecs);
         // for (int missed = pcount - sp->packet_count - 1; missed > 0; missed--)
         //     {
         //         fprintf(stderr, "%ld,0\n", pcount - missed);
         //     }
-        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 	    }
-        else {
-            fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
-        }
-	    /* Update the highest sequence number seen so far. */
+        //IDK why when this is commented out the startTime figure zeros out
+        // fprintf(stderr, "%llu,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
+        /* Update the highest sequence number seen so far. */
 	    sp->packet_count = pcount;
 	} else {
 
@@ -152,7 +151,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	     * This counts as an out-of-order packet.
 	     */
 	    sp->outoforder_packets++;
-        fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
+        // fprintf(stderr, "%ld,%d.%06d,%d.%06d\n", pcount, sec, usec, arrival_time_utc.secs, arrival_time_utc.usecs);
 
 	    /*
 	     * If we have lost packets, then the fact that we are now
@@ -167,6 +166,7 @@ iperf_udp_recv(struct iperf_stream *sp)
 	    if (sp->test->debug)
 		fprintf(stderr, "OUT OF ORDER - incoming packet sequence %" PRIu64 " but expected sequence %" PRIu64 " on stream %d", pcount, sp->packet_count + 1, sp->socket);
 	}
+    memcpy(&prev_arrival_time_utc, &arrival_time_utc, sizeof(struct iperf_time));
 
 	/*
 	 * jitter measurement
@@ -225,7 +225,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htobe64(sp->packet_count);
     
-    fprintf(stderr, "%ld,%d.%06d\n", pcount, sec, usec);
+    fprintf(stderr, "%llu,%d.%06d\n", pcount, sec, usec);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -240,7 +240,7 @@ iperf_udp_send(struct iperf_stream *sp)
 	usec = htonl(before.usecs);
 	pcount = htonl(sp->packet_count);
 
-    fprintf(stderr, "%d,%d.%06d\n", sp->packet_count, before.secs, before.usecs);
+    fprintf(stderr, "%lld,%d.%06d\n", sp->packet_count, before.secs, before.usecs);
 
 	memcpy(sp->buffer, &sec, sizeof(sec));
 	memcpy(sp->buffer+4, &usec, sizeof(usec));
@@ -633,7 +633,7 @@ int
 iperf_udp_init(struct iperf_test *test)
 {
     if (test->role == 's') {
-        fprintf(stderr, "packet,timestamp,timeReceived\n");
+        fprintf(stderr, "length,startPacket,endPacket,startTime,endTime\n");
     } else {
         fprintf(stderr, "packet,timestamp\n");
     }
